@@ -7,6 +7,7 @@ using CleanArchitecture.WebApi.Middleware;
 using CleanArchitecture.WebApi.Routing;
 using CleanArchitecture.WebApi.Services;
 using CleanArchitecture.WebApi.Settings;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
