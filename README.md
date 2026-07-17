@@ -6,10 +6,28 @@
 
 ```
 src/
-  CleanArchitecture.Domain          — сущности, константы. Без зависимостей от других слоёв.
-  CleanArchitecture.Application     — интерфейсы, DTO (валидация через DataAnnotations), исключения.
-  CleanArchitecture.Infrastructure  — EF Core (PostgreSQL), Identity, JWT, реализация сервисов, seed.
-  CleanArchitecture.WebApi          — контроллеры, middleware, Swagger, Serilog, DI-композиция.
+  CleanArchitecture.Domain            — без зависимостей от других слоёв
+    Entities/                         — ApplicationUser, RefreshToken
+    Models/                           — BaseEntity, BaseAuditableEntity
+    Constants/                        — Roles
+  CleanArchitecture.Application       — контракты и DTO
+    Services/<Фича>/                  — интерфейсы сервисов (IAuthService, IUserService)
+    Dtos/<Фича>/                      — DTO с DataAnnotations, один класс — один файл
+    Helpers/ApplicationExceptions/    — AppException и наследники
+    Helpers/Paginations/              — PagedList, PagedRequest
+    Helpers/DbContexts/               — IApplicationDbContext
+  CleanArchitecture.Infrastructure    — реализации
+    Services/<Фича>/Impl/             — AuthService, UserService
+    Helpers/Jwts/                     — ITokenService, TokenService
+    Helpers/DbContexts/               — ApplicationDbContext, DbInitializer, Configurations/
+    Helpers/Constants/                — JwtSettings, AdminSeedSettings
+    Migrations/
+  CleanArchitecture.WebApi
+    Controllers/<Фича>/               — контроллеры (наследуют BaseController)
+    Helpers/Constants/                — AppRoutes, RefreshTokenCookieSettings
+    Helpers/Filters/                  — ApiExceptionFilter
+    Helpers/Middlewares/              — GlobalExceptionHandler
+    Services/                         — CurrentUserService
 ```
 
 Зависимости направлены внутрь: `WebApi → Infrastructure → Application → Domain`.
@@ -81,8 +99,8 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 
 ## Как расширять шаблон
 
-1. **Новая сущность**: класс в `Domain/Entities` (наследуйте `BaseAuditableEntity` — поля аудита заполняются автоматически), `DbSet` в `ApplicationDbContext` + `IApplicationDbContext`, конфигурация в `Infrastructure/Persistence/Configurations`, миграция.
-2. **Новая фича**: интерфейс + DTO (с DataAnnotations-атрибутами) в `Application/Features/<Имя>`, реализация в `Infrastructure/Services`, регистрация в `Infrastructure/DependencyInjection.cs`, контроллер в `WebApi/Controllers` (наследуйте `ApiControllerBase`, роут — константа в `WebApi/Constants/AppRoutes.cs`).
+1. **Новая сущность**: класс в `Domain/Entities` (наследуйте `BaseAuditableEntity` — поля аудита заполняются автоматически), `DbSet` в `ApplicationDbContext` + `IApplicationDbContext`, конфигурация в `Infrastructure/Helpers/DbContexts/Configurations`, миграция.
+2. **Новая фича**: интерфейс в `Application/Services/<Имя>`, DTO (с DataAnnotations) в `Application/Dtos/<Имя>`, реализация в `Infrastructure/Services/<Имя>/Impl`, регистрация в `Infrastructure/DependencyInjection.cs`, контроллер в `WebApi/Controllers/<Имя>` (наследуйте `BaseController`, роут — константа в `WebApi/Helpers/Constants/AppRoutes.cs`).
 3. **Ошибки**: бросайте исключения из `Application.Common.Exceptions` (`NotFoundException`, `BadRequestException`, ...) — `GlobalExceptionHandler` сам превратит их в ProblemDetails с нужным статусом.
 4. **Роли**: добавьте константу в `Domain/Constants/Roles.cs` — она засеется при старте.
 

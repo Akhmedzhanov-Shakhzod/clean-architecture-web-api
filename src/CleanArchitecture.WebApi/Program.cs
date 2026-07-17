@@ -1,12 +1,13 @@
 using Asp.Versioning;
 using CleanArchitecture.Application;
-using CleanArchitecture.Application.Common.Interfaces;
+using CleanArchitecture.Application.Helpers.DbContexts;
+using CleanArchitecture.Application.Services;
 using CleanArchitecture.Infrastructure;
-using CleanArchitecture.Infrastructure.Persistence;
-using CleanArchitecture.WebApi.Filters;
-using CleanArchitecture.WebApi.Middleware;
+using CleanArchitecture.Infrastructure.Helpers.DbContexts;
+using CleanArchitecture.WebApi.Helpers.Filters;
+using CleanArchitecture.WebApi.Helpers.Middlewares;
 using CleanArchitecture.WebApi.Services;
-using CleanArchitecture.WebApi.Settings;
+using CleanArchitecture.WebApi.Helpers.Constants;
 using Microsoft.OpenApi.Models;
 using Serilog;
 

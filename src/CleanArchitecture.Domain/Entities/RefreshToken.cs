@@ -1,4 +1,4 @@
-using CleanArchitecture.Domain.Common;
+using CleanArchitecture.Domain.Models;
 
 namespace CleanArchitecture.Domain.Entities
 {
