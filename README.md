@@ -72,13 +72,12 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 - `Cors:AllowedOrigins` — origin'ы фронтенда (`AllowCredentials` включён — нужен для cookie).
 - `Database:RunMigrationsOnStartup` — в production обычно `false` (миграции через CI/CD).
 
-**Секреты не хранить в git.** Для разработки — `appsettings.Development.json` или user-secrets:
+**Секреты не хранить в git.** Слои конфигурации (каждый следующий переопределяет предыдущий):
 
-```bash
-dotnet user-secrets set "JwtSettings:Secret" "<случайная строка 64+ символов>" --project src/CleanArchitecture.WebApi
-```
-
-В production — переменные окружения: `JwtSettings__Secret`, `ConnectionStrings__DefaultConnection`, `AdminSeed__Password`.
+1. `appsettings.json` — структура и безопасные дефолты (в git).
+2. `appsettings.Development.json` — общие dev-настройки без секретов: логирование, cookie без Secure и т.п. (в git).
+3. `appsettings.Local.json` — секреты и настройки конкретной машины (в `.gitignore`). Скопируйте из `appsettings.Local.json.example` и заполните.
+4. Переменные окружения — production: `JwtSettings__Secret`, `ConnectionStrings__DefaultConnection`, `AdminSeed__Password`.
 
 ## Как расширять шаблон
 

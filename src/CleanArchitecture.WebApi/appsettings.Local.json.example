@@ -1,0 +1,11 @@
+{
+  "JwtSettings": {
+    "Secret": "<случайная строка 32+ символов, например: openssl rand -base64 48>"
+  },
+  "AdminSeed": {
+    "Password": "<пароль первого админа>"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=clean_architecture;Username=postgres;Password=postgres"
+  }
+}

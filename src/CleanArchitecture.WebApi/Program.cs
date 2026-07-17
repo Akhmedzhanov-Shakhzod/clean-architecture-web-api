@@ -16,6 +16,9 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // Локальные переопределения (не в git): секреты, строка подключения и т.п.
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
     builder.Host.UseSerilog((context, configuration) =>
         configuration.ReadFrom.Configuration(context.Configuration));
 
