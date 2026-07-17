@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    environment:
+      - ASPNETCORE_ENVIRONMENT: Development
+      - ASPNETCORE_URLS=http://+:5000
+      - TZ=Asia/Bishkek
+    ports:
+      - "5000:5000"

@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/.idea/
+**/.vscode/
+README.md
+docker-compose.yml

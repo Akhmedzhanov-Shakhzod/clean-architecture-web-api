@@ -1,0 +1,48 @@
+@baseUrl = http://localhost:5000
+
+### Health check
+GET {{baseUrl}}/health
+
+### Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "User1234!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Login (refresh token arrives as HttpOnly cookie)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin123!"
+}
+
+### Refresh (uses the cookie set by login)
+POST {{baseUrl}}/api/auth/refresh
+
+### Me
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Change password
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin123!",
+  "newPassword": "NewAdmin123!"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+
+### Users (Admin only)
+GET {{baseUrl}}/api/users?page=1&pageSize=20
+Authorization: Bearer {{accessToken}}
