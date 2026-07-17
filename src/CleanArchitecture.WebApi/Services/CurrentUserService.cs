@@ -1,24 +1,25 @@
 using System.Security.Claims;
 using CleanArchitecture.Application.Common.Interfaces;
 
-namespace CleanArchitecture.WebApi.Services;
-
-public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
+namespace CleanArchitecture.WebApi.Services
 {
-    private HttpContext? HttpContext => httpContextAccessor.HttpContext;
-
-    public Guid? UserId
+    public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
     {
-        get
+        private HttpContext? HttpContext => httpContextAccessor.HttpContext;
+
+        public Guid? UserId
         {
-            var value = HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.TryParse(value, out var id) ? id : null;
+            get
+            {
+                var value = HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                return Guid.TryParse(value, out var id) ? id : null;
+            }
         }
+
+        public string? IpAddress =>
+            HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim()
+            ?? HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        public bool IsAuthenticated => HttpContext?.User.Identity?.IsAuthenticated ?? false;
     }
-
-    public string? IpAddress =>
-        HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim()
-        ?? HttpContext?.Connection.RemoteIpAddress?.ToString();
-
-    public bool IsAuthenticated => HttpContext?.User.Identity?.IsAuthenticated ?? false;
 }

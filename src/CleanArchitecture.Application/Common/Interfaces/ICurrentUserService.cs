@@ -1,8 +1,9 @@
-namespace CleanArchitecture.Application.Common.Interfaces;
-
-public interface ICurrentUserService
+namespace CleanArchitecture.Application.Common.Interfaces
 {
-    Guid? UserId { get; }
-    string? IpAddress { get; }
-    bool IsAuthenticated { get; }
+    public interface ICurrentUserService
+    {
+        Guid? UserId { get; }
+        string? IpAddress { get; }
+        bool IsAuthenticated { get; }
+    }
 }

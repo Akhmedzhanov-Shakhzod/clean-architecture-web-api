@@ -1,13 +1,14 @@
-namespace CleanArchitecture.Application.Features.Users.Models;
-
-public record UserDto
+namespace CleanArchitecture.Application.Features.Users.Models
 {
-    public Guid Id { get; init; }
-    public string Email { get; init; } = string.Empty;
-    public string FirstName { get; init; } = string.Empty;
-    public string LastName { get; init; } = string.Empty;
-    public string FullName { get; init; } = string.Empty;
-    public bool IsActive { get; init; }
-    public DateTime CreatedAt { get; init; }
-    public IReadOnlyList<string> Roles { get; init; } = [];
+    public class UserDto
+    {
+        public Guid Id { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<string> Roles { get; set; } = new();
+    }
 }

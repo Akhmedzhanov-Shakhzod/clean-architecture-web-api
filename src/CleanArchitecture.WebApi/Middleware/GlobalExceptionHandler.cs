@@ -1,48 +1,43 @@
 using CleanArchitecture.Application.Common.Exceptions;
-using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitecture.WebApi.Middleware;
-
-/// <summary>Maps exceptions to RFC 7807 ProblemDetails responses (.NET 8 IExceptionHandler).</summary>
-public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+namespace CleanArchitecture.WebApi.Middleware
 {
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    /// <summary>
+    /// Последний рубеж: превращает исключения в ProblemDetails (RFC 7807).
+    /// Ожидаемые ошибки обычно перехватывает ApiExceptionFilter раньше;
+    /// сюда долетают неожиданные исключения и ошибки вне MVC-пайплайна.
+    /// </summary>
+    public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
     {
-        var problemDetails = exception switch
+        public async ValueTask<bool> TryHandleAsync(
+            HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            ValidationException validationException => new ValidationProblemDetails(
-                validationException.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()))
+            var problemDetails = exception switch
             {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Validation failed"
-            },
+                AppException appException => new ProblemDetails
+                {
+                    Status = appException.StatusCode,
+                    Title = appException.Message
+                },
 
-            AppException appException => new ProblemDetails
-            {
-                Status = appException.StatusCode,
-                Title = appException.Message
-            },
+                _ => new ProblemDetails
+                {
+                    Status = StatusCodes.Status500InternalServerError,
+                    Title = "An unexpected error occurred."
+                }
+            };
 
-            _ => new ProblemDetails
-            {
-                Status = StatusCodes.Status500InternalServerError,
-                Title = "An unexpected error occurred."
-            }
-        };
+            if (problemDetails.Status == StatusCodes.Status500InternalServerError)
+                logger.LogError(exception, "Unhandled exception at {Path}", httpContext.Request.Path);
+            else
+                logger.LogInformation("Handled {ExceptionType}: {Message}", exception.GetType().Name, exception.Message);
 
-        if (problemDetails.Status == StatusCodes.Status500InternalServerError)
-            logger.LogError(exception, "Unhandled exception at {Path}", httpContext.Request.Path);
-        else
-            logger.LogInformation("Handled {ExceptionType}: {Message}", exception.GetType().Name, exception.Message);
+            httpContext.Response.StatusCode = problemDetails.Status!.Value;
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
-        httpContext.Response.StatusCode = problemDetails.Status!.Value;
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-
-        return true;
+            return true;
+        }
     }
 }

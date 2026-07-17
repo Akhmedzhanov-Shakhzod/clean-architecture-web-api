@@ -1,22 +1,23 @@
-namespace CleanArchitecture.Application.Common.Models;
-
-public record PagedRequest
+namespace CleanArchitecture.Application.Common.Models
 {
-    private const int MaxPageSize = 100;
-    private readonly int _page = 1;
-    private readonly int _pageSize = 20;
-
-    public int Page
+    public class PagedRequest
     {
-        get => _page;
-        init => _page = value < 1 ? 1 : value;
-    }
+        private const int MaxPageSize = 100;
+        private int _page = 1;
+        private int _pageSize = 20;
 
-    public int PageSize
-    {
-        get => _pageSize;
-        init => _pageSize = value < 1 ? 20 : Math.Min(value, MaxPageSize);
-    }
+        public int Page
+        {
+            get => _page;
+            set => _page = value < 1 ? 1 : value;
+        }
 
-    public string? Search { get; init; }
+        public int PageSize
+        {
+            get => _pageSize;
+            set => _pageSize = value < 1 ? 20 : Math.Min(value, MaxPageSize);
+        }
+
+        public string? Search { get; set; }
+    }
 }

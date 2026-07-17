@@ -7,69 +7,70 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace CleanArchitecture.Infrastructure.Persistence;
-
-public static class DbInitializer
+namespace CleanArchitecture.Infrastructure.Persistence
 {
-    /// <summary>Applies pending migrations and seeds roles + default admin.</summary>
-    public static async Task InitializeAsync(IServiceProvider serviceProvider)
+    public static class DbInitializer
     {
-        using var scope = serviceProvider.CreateScope();
-        var services = scope.ServiceProvider;
-        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbInitializer");
-
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Database migrations applied.");
-
-        await SeedRolesAsync(services);
-        await SeedAdminAsync(services, logger);
-    }
-
-    private static async Task SeedRolesAsync(IServiceProvider services)
-    {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-
-        foreach (var role in Roles.All)
+        /// <summary>Applies pending migrations and seeds roles + default admin.</summary>
+        public static async Task InitializeAsync(IServiceProvider serviceProvider)
         {
-            if (!await roleManager.RoleExistsAsync(role))
-                await roleManager.CreateAsync(new IdentityRole<Guid>(role));
-        }
-    }
+            using var scope = serviceProvider.CreateScope();
+            var services = scope.ServiceProvider;
+            var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbInitializer");
 
-    private static async Task SeedAdminAsync(IServiceProvider services, ILogger logger)
-    {
-        var settings = services.GetRequiredService<IOptions<AdminSeedSettings>>().Value;
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied.");
 
-        if (string.IsNullOrWhiteSpace(settings.Email) || string.IsNullOrWhiteSpace(settings.Password))
-        {
-            logger.LogWarning("AdminSeed settings are empty — skipping admin seeding.");
-            return;
+            await SeedRolesAsync(services);
+            await SeedAdminAsync(services, logger);
         }
 
-        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-
-        if (await userManager.FindByEmailAsync(settings.Email) is not null)
-            return;
-
-        var admin = new ApplicationUser
+        private static async Task SeedRolesAsync(IServiceProvider services)
         {
-            UserName = settings.Email,
-            Email = settings.Email,
-            FirstName = settings.FirstName,
-            LastName = settings.LastName,
-            EmailConfirmed = true
-        };
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-        var result = await userManager.CreateAsync(admin, settings.Password);
-        if (!result.Succeeded)
-        {
-            logger.LogError("Failed to seed admin user: {Errors}",
-                string.Join("; ", result.Errors.Select(e => e.Description)));
-            return;
+            foreach (var role in Roles.All)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+            }
         }
 
-        await userManager.AddToRoleAsync(admin, Roles.Admin);
-        logger.LogInformation("Admin user {Email} seeded.", settings.Email);
+        private static async Task SeedAdminAsync(IServiceProvider services, ILogger logger)
+        {
+            var settings = services.GetRequiredService<IOptions<AdminSeedSettings>>().Value;
+
+            if (string.IsNullOrWhiteSpace(settings.Email) || string.IsNullOrWhiteSpace(settings.Password))
+            {
+                logger.LogWarning("AdminSeed settings are empty — skipping admin seeding.");
+                return;
+            }
+
+            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+            if (await userManager.FindByEmailAsync(settings.Email) is not null)
+                return;
+
+            var admin = new ApplicationUser
+            {
+                UserName = settings.Email,
+                Email = settings.Email,
+                FirstName = settings.FirstName,
+                LastName = settings.LastName,
+                EmailConfirmed = true
+            };
+
+            var result = await userManager.CreateAsync(admin, settings.Password);
+            if (!result.Succeeded)
+            {
+                logger.LogError("Failed to seed admin user: {Errors}",
+                    string.Join("; ", result.Errors.Select(e => e.Description)));
+                return;
+            }
+
+            await userManager.AddToRoleAsync(admin, Roles.Admin);
+            logger.LogInformation("Admin user {Email} seeded.", settings.Email);
+        }
     }
 }

@@ -5,10 +5,8 @@ using CleanArchitecture.Infrastructure;
 using CleanArchitecture.Infrastructure.Persistence;
 using CleanArchitecture.WebApi.Filters;
 using CleanArchitecture.WebApi.Middleware;
-using CleanArchitecture.WebApi.Routing;
 using CleanArchitecture.WebApi.Services;
 using CleanArchitecture.WebApi.Settings;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -35,11 +33,7 @@ try
     builder.Services.Configure<RefreshTokenCookieSettings>(
         builder.Configuration.GetSection(RefreshTokenCookieSettings.SectionName));
 
-    builder.Services.AddControllers(options =>
-    {
-        options.Conventions.Add(new RouteTokenTransformerConvention(new LowercaseParameterTransformer()));
-        options.Filters.Add<ApiExceptionFilter>();
-    });
+    builder.Services.AddControllers(options => options.Filters.Add<ApiExceptionFilter>());
 
     builder.Services.AddRouting(options => options.LowercaseUrls = true);
 

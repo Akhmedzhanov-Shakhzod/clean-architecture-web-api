@@ -1,16 +1,14 @@
-using System.Reflection;
-using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace CleanArchitecture.Application;
-
-public static class DependencyInjection
+namespace CleanArchitecture.Application
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static class DependencyInjection
     {
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-        services.AddSingleton(TimeProvider.System);
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+            services.AddSingleton(TimeProvider.System);
 
-        return services;
+            return services;
+        }
     }
 }

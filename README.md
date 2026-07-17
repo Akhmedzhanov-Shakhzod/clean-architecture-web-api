@@ -7,7 +7,7 @@
 ```
 src/
   CleanArchitecture.Domain          — сущности, константы. Без зависимостей от других слоёв.
-  CleanArchitecture.Application     — интерфейсы, DTO, валидация (FluentValidation), исключения.
+  CleanArchitecture.Application     — интерфейсы, DTO (валидация через DataAnnotations), исключения.
   CleanArchitecture.Infrastructure  — EF Core (PostgreSQL), Identity, JWT, реализация сервисов, seed.
   CleanArchitecture.WebApi          — контроллеры, middleware, Swagger, Serilog, DI-композиция.
 ```
@@ -82,7 +82,7 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 ## Как расширять шаблон
 
 1. **Новая сущность**: класс в `Domain/Entities` (наследуйте `BaseAuditableEntity` — поля аудита заполняются автоматически), `DbSet` в `ApplicationDbContext` + `IApplicationDbContext`, конфигурация в `Infrastructure/Persistence/Configurations`, миграция.
-2. **Новая фича**: интерфейс + DTO + валидаторы в `Application/Features/<Имя>`, реализация в `Infrastructure/Services`, регистрация в `Infrastructure/DependencyInjection.cs`, контроллер в `WebApi/Controllers` (наследуйте `ApiControllerBase`).
+2. **Новая фича**: интерфейс + DTO (с DataAnnotations-атрибутами) в `Application/Features/<Имя>`, реализация в `Infrastructure/Services`, регистрация в `Infrastructure/DependencyInjection.cs`, контроллер в `WebApi/Controllers` (наследуйте `ApiControllerBase`, роут — константа в `WebApi/Constants/AppRoutes.cs`).
 3. **Ошибки**: бросайте исключения из `Application.Common.Exceptions` (`NotFoundException`, `BadRequestException`, ...) — `GlobalExceptionHandler` сам превратит их в ProblemDetails с нужным статусом.
 4. **Роли**: добавьте константу в `Domain/Constants/Roles.cs` — она засеется при старте.
 

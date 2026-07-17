@@ -1,11 +1,12 @@
 using CleanArchitecture.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace CleanArchitecture.Application.Common.Interfaces;
-
-public interface IApplicationDbContext
+namespace CleanArchitecture.Application.Common.Interfaces
 {
-    DbSet<RefreshToken> RefreshTokens { get; }
+    public interface IApplicationDbContext
+    {
+        DbSet<RefreshToken> RefreshTokens { get; }
 
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    }
 }
