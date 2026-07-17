@@ -1,8 +1,10 @@
+using Asp.Versioning;
 using CleanArchitecture.Application;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Infrastructure;
 using CleanArchitecture.Infrastructure.Persistence;
 using CleanArchitecture.WebApi.Middleware;
+using CleanArchitecture.WebApi.Routing;
 using CleanArchitecture.WebApi.Services;
 using CleanArchitecture.WebApi.Settings;
 using Microsoft.OpenApi.Models;
@@ -31,7 +33,26 @@ try
     builder.Services.Configure<RefreshTokenCookieSettings>(
         builder.Configuration.GetSection(RefreshTokenCookieSettings.SectionName));
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+        options.Conventions.Add(new RouteTokenTransformerConvention(new LowercaseParameterTransformer())));
+
+    builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
+    // --- Версионирование: /api/v1/... ---
+    builder.Services
+        .AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
     builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 

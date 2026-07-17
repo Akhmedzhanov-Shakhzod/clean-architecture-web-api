@@ -17,8 +17,8 @@ src/
 ## Аутентификация
 
 - **Access token** — короткоживущий JWT (15 мин по умолчанию), возвращается в теле ответа, клиент передаёт его в заголовке `Authorization: Bearer`.
-- **Refresh token** — 64 байта криптослучайности, живёт только в **HttpOnly cookie** (`Path=/api/auth`, `Secure`, `SameSite=Strict`). В БД хранится **только SHA-256 хеш**.
-- **Ротация**: каждый вызов `/api/auth/refresh` отзывает старый токен и выдаёт новый. Повторное использование отозванного токена расценивается как кража — отзывается вся цепочка потомков.
+- **Refresh token** — 64 байта криптослучайности, живёт только в **HttpOnly cookie** (`Path=/api/v1/auth`, `Secure`, `SameSite=Strict`). В БД хранится **только SHA-256 хеш**.
+- **Ротация**: каждый вызов `/api/v1/auth/refresh` отзывает старый токен и выдаёт новый. Повторное использование отозванного токена расценивается как кража — отзывается вся цепочка потомков.
 - Смена пароля отзывает все refresh-токены пользователя.
 - Lockout: 5 неудачных попыток входа → блокировка на 15 минут (ASP.NET Identity).
 
@@ -26,13 +26,13 @@ src/
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/auth/register` | Регистрация + вход |
-| POST | `/api/auth/login` | Вход, ставит refresh-cookie |
-| POST | `/api/auth/refresh` | Обмен cookie на новый access token (ротация) |
-| POST | `/api/auth/logout` | Отзыв токена, удаление cookie |
-| POST | `/api/auth/change-password` | Смена пароля (авторизован) |
-| GET | `/api/auth/me` | Текущий пользователь |
-| GET | `/api/users` | Список пользователей (роль Admin) |
+| POST | `/api/v1/auth/register` | Регистрация + вход |
+| POST | `/api/v1/auth/login` | Вход, ставит refresh-cookie |
+| POST | `/api/v1/auth/refresh` | Обмен cookie на новый access token (ротация) |
+| POST | `/api/v1/auth/logout` | Отзыв токена, удаление cookie |
+| POST | `/api/v1/auth/change-password` | Смена пароля (авторизован) |
+| GET | `/api/v1/auth/me` | Текущий пользователь |
+| GET | `/api/v1/users` | Список пользователей (роль Admin) |
 | GET | `/health` | Health check (включая БД) |
 
 ## Быстрый старт
@@ -90,7 +90,7 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 
 ```js
 // login
-await fetch('/api/auth/login', {
+await fetch('/api/v1/auth/login', {
   method: 'POST',
   credentials: 'include',              // важно: иначе cookie не сохранится
   headers: { 'Content-Type': 'application/json' },
@@ -98,7 +98,7 @@ await fetch('/api/auth/login', {
 });
 
 // refresh по истечении access-токена (обычно в interceptor на 401)
-const { accessToken } = await (await fetch('/api/auth/refresh', {
+const { accessToken } = await (await fetch('/api/v1/auth/refresh', {
   method: 'POST',
   credentials: 'include'
 })).json();
