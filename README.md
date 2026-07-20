@@ -1,6 +1,6 @@
 # Clean Architecture Web API Template (.NET 8)
 
-Базовый шаблон Web API: чистая архитектура, JWT-авторизация с refresh-токеном в HttpOnly cookie, ASP.NET Identity, PostgreSQL, Serilog, Docker.
+Базовый шаблон Web API: чистая архитектура, JWT-авторизация с access- и refresh-токенами в HttpOnly cookies, ASP.NET Identity, PostgreSQL, Serilog, Docker.
 
 ## Структура
 
@@ -24,7 +24,7 @@ src/
     Migrations/
   CleanArchitecture.WebApi
     Controllers/<Фича>/               — контроллеры (наследуют BaseController)
-    Helpers/Constants/                — AppRoutes, RefreshTokenCookieSettings
+    Helpers/Constants/                — AppRoutes, AuthCookieSettings
     Helpers/Filters/                  — ApiExceptionFilter
     Helpers/Middlewares/              — GlobalExceptionHandler
     Services/                         — CurrentUserService
@@ -34,7 +34,7 @@ src/
 
 ## Аутентификация
 
-- **Access token** — короткоживущий JWT (15 мин по умолчанию), возвращается в теле ответа, клиент передаёт его в заголовке `Authorization: Bearer`.
+- **Access token** — короткоживущий JWT (15 мин по умолчанию), живёт в **HttpOnly cookie** (`Path=/`) — фронтенду не нужно хранить токен и ставить заголовки, браузер отправляет cookie сам. Заголовок `Authorization: Bearer` остаётся запасным вариантом для Swagger и не-браузерных клиентов.
 - **Refresh token** — 64 байта криптослучайности, живёт только в **HttpOnly cookie** (`Path=/api/v1/auth`, `Secure`, `SameSite=Strict`). В БД хранится **только SHA-256 хеш**.
 - **Ротация**: каждый вызов `/api/v1/auth/refresh` отзывает старый токен и выдаёт новый. Повторное использование отозванного токена расценивается как кража — отзывается вся цепочка потомков.
 - Смена пароля отзывает все refresh-токены пользователя.
@@ -45,9 +45,9 @@ src/
 | Метод | Путь | Описание |
 |---|---|---|
 | POST | `/api/v1/auth/register` | Регистрация + вход |
-| POST | `/api/v1/auth/login` | Вход, ставит refresh-cookie |
-| POST | `/api/v1/auth/refresh` | Обмен cookie на новый access token (ротация) |
-| POST | `/api/v1/auth/logout` | Отзыв токена, удаление cookie |
+| POST | `/api/v1/auth/login` | Вход, ставит access- и refresh-cookies |
+| POST | `/api/v1/auth/refresh` | Обмен refresh-cookie на новую пару токенов (ротация) |
+| POST | `/api/v1/auth/logout` | Отзыв токена, удаление cookies |
 | POST | `/api/v1/auth/change-password` | Смена пароля (авторизован) |
 | GET | `/api/v1/auth/me` | Текущий пользователь |
 | GET | `/api/v1/users` | Список пользователей (роль Admin) |
@@ -85,7 +85,7 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 Ключевые секции `appsettings.json`:
 
 - `JwtSettings` — `Secret` (мин. 32 символа), `Issuer`, `Audience`, время жизни токенов. Валидируется при старте — приложение не поднимется без секрета.
-- `RefreshTokenCookie` — имя, путь, `SameSite`. Если SPA живёт на другом домене, поставьте `SameSite: "None"` и `Secure: true`.
+- `AuthCookies` — имена и пути access-/refresh-cookies, `SameSite`. Если SPA живёт на другом домене, поставьте `SameSite: "None"` и `Secure: true`.
 - `AdminSeed` — учётка админа, сидится при старте, если задан пароль.
 - `Cors:AllowedOrigins` — origin'ы фронтенда (`AllowCredentials` включён — нужен для cookie).
 - `Database:RunMigrationsOnStartup` — в production обычно `false` (миграции через CI/CD).
@@ -107,17 +107,17 @@ Swagger: http://localhost:5000/swagger. Примеры запросов — в `
 ## Пример работы с фронтендом
 
 ```js
-// login
+// login — оба токена приходят в HttpOnly cookies, в JS их хранить не нужно
 await fetch('/api/v1/auth/login', {
   method: 'POST',
-  credentials: 'include',              // важно: иначе cookie не сохранится
+  credentials: 'include',              // важно: иначе cookies не сохранятся
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ email, password })
 });
 
+// любой защищённый запрос — access-cookie уходит автоматически
+const me = await (await fetch('/api/v1/auth/me', { credentials: 'include' })).json();
+
 // refresh по истечении access-токена (обычно в interceptor на 401)
-const { accessToken } = await (await fetch('/api/v1/auth/refresh', {
-  method: 'POST',
-  credentials: 'include'
-})).json();
+await fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'include' });
 ```

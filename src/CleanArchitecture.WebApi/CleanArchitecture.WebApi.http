@@ -14,7 +14,7 @@ Content-Type: application/json
   "lastName": "User"
 }
 
-### Login (refresh token arrives as HttpOnly cookie)
+### Login (access + refresh tokens arrive as HttpOnly cookies)
 POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
@@ -26,13 +26,11 @@ Content-Type: application/json
 ### Refresh (uses the cookie set by login)
 POST {{baseUrl}}/api/v1/auth/refresh
 
-### Me
+### Me (access token cookie is sent automatically)
 GET {{baseUrl}}/api/v1/auth/me
-Authorization: Bearer {{accessToken}}
 
 ### Change password
 POST {{baseUrl}}/api/v1/auth/change-password
-Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
@@ -45,4 +43,3 @@ POST {{baseUrl}}/api/v1/auth/logout
 
 ### Users (Admin only)
 GET {{baseUrl}}/api/v1/users?page=1&pageSize=20
-Authorization: Bearer {{accessToken}}

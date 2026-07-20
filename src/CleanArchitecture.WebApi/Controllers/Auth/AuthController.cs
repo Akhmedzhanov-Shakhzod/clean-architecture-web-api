@@ -9,55 +9,55 @@ using Microsoft.Extensions.Options;
 namespace CleanArchitecture.WebApi.Controllers
 {
     [Route(AppRoutes.Auth)]
-    public class AuthController(IAuthService authService, IOptions<RefreshTokenCookieSettings> cookieOptions)
+    public class AuthController(IAuthService authService, IOptions<AuthCookieSettings> cookieOptions)
         : BaseController
     {
-        private readonly RefreshTokenCookieSettings _cookieSettings = cookieOptions.Value;
+        private readonly AuthCookieSettings _cookieSettings = cookieOptions.Value;
 
         /// <summary>Регистрация нового пользователя со входом.</summary>
         [HttpPost("register")]
-        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-        public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserDto>> Register(RegisterRequest request, CancellationToken cancellationToken)
         {
             var result = await authService.RegisterAsync(request, cancellationToken);
-            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            SetAuthCookies(result);
 
-            return Ok(result.Response);
+            return Ok(result.User);
         }
 
-        /// <summary>Вход. Refresh-токен возвращается только в HttpOnly cookie.</summary>
+        /// <summary>Вход. Access- и refresh-токены возвращаются только в HttpOnly cookies.</summary>
         [HttpPost("login")]
-        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDto>> Login(LoginRequest request, CancellationToken cancellationToken)
         {
             var result = await authService.LoginAsync(request, cancellationToken);
-            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            SetAuthCookies(result);
 
-            return Ok(result.Response);
+            return Ok(result.User);
         }
 
-        /// <summary>Обмен refresh-cookie на новый access token (ротация).</summary>
+        /// <summary>Обмен refresh-cookie на новую пару токенов (ротация).</summary>
         [HttpPost("refresh")]
-        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<AuthResponse>> Refresh(CancellationToken cancellationToken)
+        public async Task<ActionResult<UserDto>> Refresh(CancellationToken cancellationToken)
         {
-            var refreshToken = Request.Cookies[_cookieSettings.Name];
+            var refreshToken = Request.Cookies[_cookieSettings.RefreshTokenName];
             var result = await authService.RefreshTokenAsync(refreshToken ?? string.Empty, cancellationToken);
-            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            SetAuthCookies(result);
 
-            return Ok(result.Response);
+            return Ok(result.User);
         }
 
-        /// <summary>Отзыв refresh-токена и удаление cookie. Идемпотентен.</summary>
+        /// <summary>Отзыв refresh-токена и удаление cookies. Идемпотентен.</summary>
         [HttpPost("logout")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Logout(CancellationToken cancellationToken)
         {
-            var refreshToken = Request.Cookies[_cookieSettings.Name];
+            var refreshToken = Request.Cookies[_cookieSettings.RefreshTokenName];
             await authService.LogoutAsync(refreshToken, cancellationToken);
-            DeleteRefreshTokenCookie();
+            DeleteAuthCookies();
 
             return NoContent();
         }
@@ -65,14 +65,14 @@ namespace CleanArchitecture.WebApi.Controllers
         /// <summary>Смена пароля. Все refresh-токены отзываются, выдаётся новая пара.</summary>
         [Authorize]
         [HttpPost("change-password")]
-        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-        public async Task<ActionResult<AuthResponse>> ChangePassword(
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserDto>> ChangePassword(
             ChangePasswordRequest request, CancellationToken cancellationToken)
         {
             var result = await authService.ChangePasswordAsync(request, cancellationToken);
-            SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
+            SetAuthCookies(result);
 
-            return Ok(result.Response);
+            return Ok(result.User);
         }
 
         /// <summary>Текущий пользователь.</summary>
@@ -86,20 +86,30 @@ namespace CleanArchitecture.WebApi.Controllers
             return Ok(user);
         }
 
-        private void SetRefreshTokenCookie(string token, DateTime expiresAt) =>
-            Response.Cookies.Append(_cookieSettings.Name, token, BuildCookieOptions(expiresAt));
+        private void SetAuthCookies(AuthResult result)
+        {
+            Response.Cookies.Append(_cookieSettings.AccessTokenName, result.AccessToken,
+                BuildCookieOptions(_cookieSettings.AccessTokenPath, result.AccessTokenExpiresAt));
+            Response.Cookies.Append(_cookieSettings.RefreshTokenName, result.RefreshToken,
+                BuildCookieOptions(_cookieSettings.RefreshTokenPath, result.RefreshTokenExpiresAt));
+        }
 
-        private void DeleteRefreshTokenCookie() =>
-            Response.Cookies.Delete(_cookieSettings.Name, BuildCookieOptions(null));
+        private void DeleteAuthCookies()
+        {
+            Response.Cookies.Delete(_cookieSettings.AccessTokenName,
+                BuildCookieOptions(_cookieSettings.AccessTokenPath, null));
+            Response.Cookies.Delete(_cookieSettings.RefreshTokenName,
+                BuildCookieOptions(_cookieSettings.RefreshTokenPath, null));
+        }
 
-        private CookieOptions BuildCookieOptions(DateTime? expiresAt) => new()
+        private CookieOptions BuildCookieOptions(string path, DateTime? expiresAt) => new()
         {
             HttpOnly = true,
             Secure = _cookieSettings.Secure,
             SameSite = Enum.TryParse<SameSiteMode>(_cookieSettings.SameSite, ignoreCase: true, out var mode)
                 ? mode
                 : SameSiteMode.Strict,
-            Path = _cookieSettings.Path,
+            Path = path,
             Expires = expiresAt
         };
     }

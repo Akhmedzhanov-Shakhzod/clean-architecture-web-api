@@ -126,12 +126,9 @@ namespace CleanArchitecture.Infrastructure.Services.Auth.Impl
 
             return new AuthResult
             {
-                Response = new AuthResponse
-                {
-                    AccessToken = accessToken,
-                    AccessTokenExpiresAt = accessExpiresAt,
-                    User = MapUser(storedToken.User, roles)
-                },
+                User = MapUser(storedToken.User, roles),
+                AccessToken = accessToken,
+                AccessTokenExpiresAt = accessExpiresAt,
                 RefreshToken = rawToken,
                 RefreshTokenExpiresAt = expiresAt
             };
@@ -211,12 +208,9 @@ namespace CleanArchitecture.Infrastructure.Services.Auth.Impl
 
             return new AuthResult
             {
-                Response = new AuthResponse
-                {
-                    AccessToken = accessToken,
-                    AccessTokenExpiresAt = accessExpiresAt,
-                    User = MapUser(user, roles)
-                },
+                User = MapUser(user, roles),
+                AccessToken = accessToken,
+                AccessTokenExpiresAt = accessExpiresAt,
                 RefreshToken = rawToken,
                 RefreshTokenExpiresAt = refreshExpiresAt
             };

@@ -8,6 +8,8 @@ using CleanArchitecture.WebApi.Helpers.Filters;
 using CleanArchitecture.WebApi.Helpers.Middlewares;
 using CleanArchitecture.WebApi.Services;
 using CleanArchitecture.WebApi.Helpers.Constants;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -31,8 +33,21 @@ try
 
     // --- Web API ---
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-    builder.Services.Configure<RefreshTokenCookieSettings>(
-        builder.Configuration.GetSection(RefreshTokenCookieSettings.SectionName));
+    builder.Services.Configure<AuthCookieSettings>(
+        builder.Configuration.GetSection(AuthCookieSettings.SectionName));
+
+    // JWT берётся из HttpOnly cookie; заголовок Authorization остаётся запасным вариантом (Swagger, не-браузерные клиенты).
+    builder.Services
+        .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+        .Configure<IOptions<AuthCookieSettings>>((options, cookieOptions) =>
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    context.Token = context.Request.Cookies[cookieOptions.Value.AccessTokenName];
+                    return Task.CompletedTask;
+                }
+            });
 
     builder.Services.AddControllers(options => options.Filters.Add<ApiExceptionFilter>());
 
@@ -63,7 +78,7 @@ try
         {
             Title = "Clean Architecture Web API",
             Version = "v1",
-            Description = "Base template: .NET 8, Clean Architecture, JWT + refresh token in HttpOnly cookie."
+            Description = "Base template: .NET 8, Clean Architecture, JWT access + refresh tokens in HttpOnly cookies."
         });
 
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
