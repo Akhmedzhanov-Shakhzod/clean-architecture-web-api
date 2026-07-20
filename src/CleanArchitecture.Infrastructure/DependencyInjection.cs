@@ -1,6 +1,5 @@
 using System.Text;
 using CleanArchitecture.Application.Helpers.DbContexts;
-using CleanArchitecture.Application.Services;
 using CleanArchitecture.Application.Services.Auth;
 using CleanArchitecture.Application.Services.Users;
 using CleanArchitecture.Domain.Entities;

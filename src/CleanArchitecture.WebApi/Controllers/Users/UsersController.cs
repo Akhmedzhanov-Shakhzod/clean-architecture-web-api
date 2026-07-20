@@ -1,12 +1,12 @@
+using CleanArchitecture.Application.Dtos.Users;
 using CleanArchitecture.Application.Helpers.Paginations;
 using CleanArchitecture.Application.Services.Users;
-using CleanArchitecture.Application.Dtos.Users;
 using CleanArchitecture.Domain.Constants;
 using CleanArchitecture.WebApi.Helpers.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitecture.WebApi.Controllers
+namespace CleanArchitecture.WebApi.Controllers.Users
 {
     /// <summary>Пример защищённого контроллера с ограничением по роли.</summary>
     [Authorize(Roles = Roles.Admin)]

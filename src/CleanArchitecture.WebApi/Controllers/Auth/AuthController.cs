@@ -1,12 +1,12 @@
-using CleanArchitecture.Application.Services.Auth;
 using CleanArchitecture.Application.Dtos.Auth;
 using CleanArchitecture.Application.Dtos.Users;
+using CleanArchitecture.Application.Services.Auth;
 using CleanArchitecture.WebApi.Helpers.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace CleanArchitecture.WebApi.Controllers
+namespace CleanArchitecture.WebApi.Controllers.Auth
 {
     [Route(AppRoutes.Auth)]
     public class AuthController(IAuthService authService, IOptions<AuthCookieSettings> cookieOptions)

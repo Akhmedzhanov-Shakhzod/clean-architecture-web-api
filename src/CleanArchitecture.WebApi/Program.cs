@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using CleanArchitecture.Application;
-using CleanArchitecture.Application.Helpers.DbContexts;
 using CleanArchitecture.Application.Services;
 using CleanArchitecture.Infrastructure;
 using CleanArchitecture.Infrastructure.Helpers.DbContexts;
